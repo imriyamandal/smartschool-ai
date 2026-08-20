@@ -2,8 +2,13 @@ import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 import { AuthenticatedSession, UserRole } from '../../types';
 
+const configuredSecret = process.env.SESSION_SECRET;
+if (process.env.NODE_ENV === 'production' && (!configuredSecret || configuredSecret.length < 32)) {
+  throw new Error('SESSION_SECRET must be configured with at least 32 characters in production.');
+}
+
 const SECRET_KEY = new TextEncoder().encode(
-  process.env.SESSION_SECRET || 'fallback_secret_key_at_least_32_characters_long'
+  configuredSecret || 'development_only_session_secret_at_least_32_characters'
 );
 
 export const signSession = async (session: AuthenticatedSession): Promise<string> => {

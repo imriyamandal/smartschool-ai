@@ -67,7 +67,7 @@ cp .env.example .env
 Open `.env` and configure your API key if you want to run live Gemini AI:
 ```env
 GEMINI_API_KEY=your_actual_gemini_api_key
-GEMINI_MODEL=gemini-2.5-flash
+GEMINI_MODEL=gemini-3.6-flash
 SESSION_SECRET=a_very_long_secure_string_at_least_32_characters
 ```
 *Note: If `GEMINI_API_KEY` is left blank, the app will automatically fall back to its internal natural language parser, allowing you to run and evaluate all 12 demo scenarios out-of-the-box without keys.*

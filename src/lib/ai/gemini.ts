@@ -117,6 +117,24 @@ const handleLocalMockAI = (
 
   // 1. Student asks own attendance
   if (session.role === 'student') {
+    const requestedOtherStudent = ['rahul', 'aarav', 'student'].some((name) =>
+      query.includes(name)
+    ) && !query.includes('my') && !query.includes('meri');
+
+    if (requestedOtherStudent && !query.includes('aarav')) {
+      return {
+        intent: 'UNKNOWN',
+        entities: {},
+        response: isHindi
+          ? 'मैं केवल आपकी उपस्थिति की जानकारी देख सकता हूँ।'
+          : 'I can only access your attendance information.',
+        wantsToExecute: false,
+        toolName: null,
+        toolArgs: null,
+        clarificationNeeded: null
+      };
+    }
+
     if (query.includes('attendance') || query.includes('kitni hai') || query.includes('upasthiti')) {
       if (query.includes('recent') || query.includes('hal hi me') || query.includes('pichle')) {
         return {
@@ -339,7 +357,7 @@ export const queryAIService = async (
     }));
     contents.push({ role: 'user', parts: [{ text }] });
 
-    const modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+    const modelName = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
     const model = genAI.getGenerativeModel({
       model: modelName,
       generationConfig: {

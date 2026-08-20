@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Mic, MicOff, Square, Volume2, AlertCircle } from 'lucide-react';
 import { AIAvatar, AvatarState } from '../avatar/avatar';
 
@@ -11,24 +11,54 @@ interface VoiceControllerProps {
   setAvatarState: (state: AvatarState) => void;
 }
 
+interface SpeechRecognitionEventLike {
+  results: ArrayLike<ArrayLike<{ transcript: string }>>;
+}
+
+interface SpeechRecognitionErrorLike {
+  error: string;
+}
+
+interface SpeechRecognitionLike {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  onstart: (() => void) | null;
+  onresult: ((event: SpeechRecognitionEventLike) => void) | null;
+  onerror: ((event: SpeechRecognitionErrorLike) => void) | null;
+  onend: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+  abort: () => void;
+}
+
+interface SpeechRecognitionWindow extends Window {
+  SpeechRecognition?: new () => SpeechRecognitionLike;
+  webkitSpeechRecognition?: new () => SpeechRecognitionLike;
+}
+
 export const VoiceController: React.FC<VoiceControllerProps> = ({
   currentLanguage,
   onTranscriptSubmitted,
   avatarState,
   setAvatarState
 }) => {
-  const [isSupported, setIsSupported] = useState(true);
+  const [isSupported] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    const speechWindow = window as SpeechRecognitionWindow;
+    return Boolean(speechWindow.SpeechRecognition || speechWindow.webkitSpeechRecognition);
+  });
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [aiResponse, setAiResponse] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [isSpeaking, setIsSpeaking] = useState(false);
 
-  const recognitionRef = useRef<any>(null);
+  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const synthRef = useRef<SpeechSynthesis | null>(null);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
 
-  // Map user selections to browser locales
-  const getLanguageLocale = (lang: string): string => {
+  function getLanguageLocale(lang: string): string {
     switch (lang) {
       case 'Hindi': return 'hi-IN';
       case 'Tamil': return 'ta-IN';
@@ -42,13 +72,48 @@ export const VoiceController: React.FC<VoiceControllerProps> = ({
       case 'Urdu': return 'ur-PK';
       default: return 'en-US';
     }
-  };
+  }
+
+  const speakText = useCallback((text: string) => {
+    if (!synthRef.current) return;
+
+    synthRef.current.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    const locale = getLanguageLocale(currentLanguage);
+    utterance.lang = locale;
+
+    const voices = synthRef.current.getVoices();
+    const voice = voices.find(v => v.lang.startsWith(locale.substring(0, 2))) || voices.find(v => v.lang.startsWith('en'));
+    if (voice) {
+      utterance.voice = voice;
+    }
+
+    utterance.onstart = () => {
+      setIsSpeaking(true);
+      setAvatarState('speaking');
+    };
+
+    utterance.onend = () => {
+      setIsSpeaking(false);
+      setAvatarState('idle');
+    };
+
+    utterance.onerror = () => {
+      setIsSpeaking(false);
+      setAvatarState('error');
+      setTimeout(() => setAvatarState('idle'), 2000);
+    };
+
+    utteranceRef.current = utterance;
+    synthRef.current.speak(utterance);
+  }, [currentLanguage, setAvatarState]);
 
   useEffect(() => {
     // Check Speech Recognition support
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const speechWindow = window as SpeechRecognitionWindow;
+    const SpeechRecognition = speechWindow.SpeechRecognition || speechWindow.webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      setIsSupported(false);
       return;
     }
 
@@ -66,7 +131,7 @@ export const VoiceController: React.FC<VoiceControllerProps> = ({
       setTranscript('');
     };
 
-    recognition.onresult = async (event: any) => {
+    recognition.onresult = async (event: SpeechRecognitionEventLike) => {
       const resultText = event.results[0][0].transcript;
       setTranscript(resultText);
       setIsListening(false);
@@ -76,13 +141,13 @@ export const VoiceController: React.FC<VoiceControllerProps> = ({
         const response = await onTranscriptSubmitted(resultText);
         setAiResponse(response);
         speakText(response);
-      } catch (err: any) {
-        setErrorMessage(err.message || 'Failed to fetch AI response.');
+      } catch (err: unknown) {
+        setErrorMessage(err instanceof Error ? err.message : 'Failed to fetch AI response.');
         setAvatarState('error');
       }
     };
 
-    recognition.onerror = (event: any) => {
+    recognition.onerror = (event: SpeechRecognitionErrorLike) => {
       console.error('Speech recognition error:', event.error);
       setIsListening(false);
       
@@ -97,9 +162,7 @@ export const VoiceController: React.FC<VoiceControllerProps> = ({
 
     recognition.onend = () => {
       setIsListening(false);
-      if (avatarState === 'listening') {
-        setAvatarState('idle');
-      }
+      setAvatarState('idle');
     };
 
     recognitionRef.current = recognition;
@@ -112,7 +175,7 @@ export const VoiceController: React.FC<VoiceControllerProps> = ({
         synthRef.current.cancel();
       }
     };
-  }, [currentLanguage]);
+  }, [currentLanguage, onTranscriptSubmitted, setAvatarState, speakText]);
 
   // Update locale dynamically when language changes
   useEffect(() => {
@@ -121,44 +184,10 @@ export const VoiceController: React.FC<VoiceControllerProps> = ({
     }
   }, [currentLanguage]);
 
-  // Text-To-Speech
-  const speakText = (text: string) => {
-    if (!synthRef.current) return;
-    
-    // Stop any ongoing speech
-    synthRef.current.cancel();
-
-    const utterance = new SpeechSynthesisUtterance(text);
-    const locale = getLanguageLocale(currentLanguage);
-    utterance.lang = locale;
-
-    // Try to find a matching voice locale
-    const voices = synthRef.current.getVoices();
-    const voice = voices.find(v => v.lang.startsWith(locale.substring(0, 2))) || voices.find(v => v.lang.startsWith('en'));
-    if (voice) {
-      utterance.voice = voice;
-    }
-
-    utterance.onstart = () => {
-      setAvatarState('speaking');
-    };
-
-    utterance.onend = () => {
-      setAvatarState('idle');
-    };
-
-    utterance.onerror = (e) => {
-      console.error('Speech synthesis error:', e);
-      setAvatarState('error');
-      setTimeout(() => setAvatarState('idle'), 2000);
-    };
-
-    utteranceRef.current = utterance;
-    synthRef.current.speak(utterance);
-  };
-
   const toggleListening = () => {
     if (!isSupported) return;
+    const recognition = recognitionRef.current;
+    if (!recognition) return;
     
     // Stop speech synthesis if playing
     if (synthRef.current && synthRef.current.speaking) {
@@ -168,14 +197,14 @@ export const VoiceController: React.FC<VoiceControllerProps> = ({
     }
 
     if (isListening) {
-      recognitionRef.current.stop();
+      recognition.stop();
     } else {
       try {
-        recognitionRef.current.start();
-      } catch (e) {
+        recognition.start();
+      } catch {
         // Handle race conditions where start is called twice
-        recognitionRef.current.stop();
-        setTimeout(() => recognitionRef.current.start(), 100);
+        recognition.stop();
+        setTimeout(() => recognition.start(), 100);
       }
     }
   };
@@ -210,7 +239,7 @@ export const VoiceController: React.FC<VoiceControllerProps> = ({
           {isListening ? <MicOff className="w-7 h-7" /> : <Mic className="w-7 h-7" />}
         </button>
 
-        {synthRef.current?.speaking && (
+        {isSpeaking && (
           <button
             onClick={stopSpeaking}
             className="flex items-center justify-center w-12 h-12 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-full border border-zinc-700 transition"
@@ -226,7 +255,7 @@ export const VoiceController: React.FC<VoiceControllerProps> = ({
         {transcript && (
           <div className="bg-zinc-900/60 rounded-xl p-3 border border-zinc-800">
             <span className="text-xs text-zinc-400 font-semibold uppercase block mb-1">You said:</span>
-            <p className="text-sm text-zinc-200 italic">"{transcript}"</p>
+            <p className="text-sm text-zinc-200 italic">&quot;{transcript}&quot;</p>
           </div>
         )}
 
@@ -245,7 +274,7 @@ export const VoiceController: React.FC<VoiceControllerProps> = ({
             <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
             <div>
               <p className="font-semibold">Speech Recognition Not Supported</p>
-              <p className="text-amber-400/80">Your browser doesn't support local Speech Recognition. Please use Chrome or Safari, or switch to the Chat view to type.</p>
+              <p className="text-amber-400/80">Your browser doesn&apos;t support local Speech Recognition. Please use Chrome or Safari, or switch to the Chat view to type.</p>
             </div>
           </div>
         )}

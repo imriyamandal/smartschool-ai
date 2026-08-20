@@ -194,6 +194,21 @@ describe('Functional Scenarios & AI Routing Tests', () => {
     expect(res.toolArgs.studentId).toBe('STU001');
   });
 
+  it('should not expose another student attendance to a student', async () => {
+    const studentSession: AuthenticatedSession = {
+      userId: 'STU001',
+      name: 'Aarav',
+      role: 'student',
+      studentId: 'STU001',
+      permissions: ['own_attendance_read']
+    };
+
+    const res = await queryAIService('Show me Rahul attendance', studentSession);
+    expect(res.intent).toBe('UNKNOWN');
+    expect(res.wantsToExecute).toBe(false);
+    expect(res.toolName).toBeNull();
+  });
+
   // Test child attendance routing
   it('should classify parent child attendance request', async () => {
     const parentSession: AuthenticatedSession = {

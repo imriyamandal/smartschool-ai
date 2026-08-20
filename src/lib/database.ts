@@ -84,19 +84,17 @@ const initialPrincipals: Principal[] = [
   }
 ];
 
-// Generate attendance records for past 30 days
-// Aarav: 91.2% attendance. Let's make it 91.2%. e.g., 31 days: 28 present, 3 absent = 90.3%
-// Let's generate exactly the right status.
-// For STU001 (Aarav): 34 records, 31 present, 3 absent (31 / 34 = 91.17% ~ 91.2%)
+// Generate 34 weekday attendance records.
+// For STU001 (Aarav): 31 present, 3 absent (31 / 34 = 91.17% ~ 91.2%).
 // For STU002 (Rahul Sharma): 34 records, 30 present, 4 absent (~88.2%)
 // For STU003 (Rahul Kumar): 34 records, 29 present, 5 absent (~85.3%)
 const generateAttendance = (): AttendanceRecord[] => {
   const records: AttendanceRecord[] = [];
   const studentIds = ['STU001', 'STU002', 'STU003'];
-  const totalDays = 34;
+  const totalRecords = 34;
   const today = new Date('2026-08-20');
 
-  for (let i = 1; i <= totalDays; i++) {
+  for (let i = 1; records.length < totalRecords * studentIds.length; i++) {
     const d = new Date(today);
     d.setDate(today.getDate() - i);
     

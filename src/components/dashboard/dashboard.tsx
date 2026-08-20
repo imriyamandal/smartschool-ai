@@ -235,10 +235,10 @@ export const Dashboard: React.FC = () => {
         {/* Brand */}
         <div className="p-6 border-b border-zinc-800 flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center font-bold text-white tracking-wider shadow-lg shadow-violet-500/20">
-            XYZ
+            SS
           </div>
           <div>
-            <h1 className="font-bold text-sm tracking-wide text-zinc-100 uppercase">XYZ AI Assistant</h1>
+            <h1 className="font-bold text-sm tracking-wide text-zinc-100 uppercase">SmartSchool AI</h1>
             <span className="text-[10px] text-zinc-500 font-semibold tracking-wider block">ERP ECOSYSTEM</span>
           </div>
         </div>

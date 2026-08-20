@@ -2,7 +2,7 @@ import { Dashboard } from '@/components/dashboard/dashboard';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'XYZ AI — Applied AI School Assistant',
+  title: 'SmartSchool AI — School Assistant',
   description: 'Standalone intelligent school assistant handling attendance, parent-teacher escalations, and principal reports.',
 };
 

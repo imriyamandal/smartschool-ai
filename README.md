@@ -1,6 +1,6 @@
-# XYZ AI — Standing Applied AI School Assistant
+# SmartSchool AI — Standalone Applied AI School Assistant
 
-XYZ AI is a standalone Applied AI school assistant designed to interact with students, parents, teachers, and school administrators, behaving like a real school assistant.
+SmartSchool AI is a standalone Applied AI school assistant designed to interact with students, parents, teachers, and school administrators, behaving like a real school assistant.
 
 The project is built as a production-quality prototype using a secure full-stack architecture, featuring dynamic AI orchestration, browser-based voice agents, visual HTML5 Canvas avatars, real-time analytics, and strict server-side boundary checks.
 

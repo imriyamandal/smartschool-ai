@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'XYZ AI — Applied AI School Assistant',
+  title: 'SmartSchool AI — School Assistant',
   description: 'Standalone intelligent school assistant handling attendance, parent-teacher escalations, and principal reports.',
 };
 

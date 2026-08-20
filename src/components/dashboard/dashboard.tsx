@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { 
-  Users, User, Key, ShieldCheck, Languages, Activity, 
-  MessageSquare, Mic, BarChart3, Settings, LogOut, CheckCircle2, AlertOctagon, HelpCircle 
+  Users, User, Languages, Activity, 
+  MessageSquare, Mic, BarChart3, LogOut, CheckCircle2, AlertOctagon, HelpCircle 
 } from 'lucide-react';
 import { Chat } from '../chat/chat';
 import { VoiceController } from '../voice/voice';
@@ -68,7 +68,7 @@ export const Dashboard: React.FC = () => {
       } else {
         setSchoolAnalytics(null);
       }
-    } catch (e) {
+    } catch {
       setSchoolAnalytics(null);
     }
   };

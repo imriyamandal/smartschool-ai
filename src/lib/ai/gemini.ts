@@ -399,7 +399,7 @@ export const queryAIService = async (
       }
 
       return parsed;
-    } catch (parseError) {
+    } catch {
       console.error('Failed to parse Gemini JSON output. Raw response:', respText);
       return {
         intent: 'UNKNOWN',

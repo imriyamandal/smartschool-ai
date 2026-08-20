@@ -2,26 +2,29 @@ import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 import { AuthenticatedSession, UserRole } from '../../types';
 
-const configuredSecret = process.env.SESSION_SECRET;
-if (process.env.NODE_ENV === 'production' && (!configuredSecret || configuredSecret.length < 32)) {
-  throw new Error('SESSION_SECRET must be configured with at least 32 characters in production.');
-}
-
-const SECRET_KEY = new TextEncoder().encode(
-  configuredSecret || 'development_only_session_secret_at_least_32_characters'
-);
+const getSecretKey = (): Uint8Array => {
+  const configuredSecret = process.env.SESSION_SECRET;
+  if (process.env.NODE_ENV === 'production' && (!configuredSecret || configuredSecret.length < 32)) {
+    throw new Error('SESSION_SECRET must be configured with at least 32 characters in production.');
+  }
+  return new TextEncoder().encode(
+    configuredSecret || 'development_only_session_secret_at_least_32_characters'
+  );
+};
 
 export const signSession = async (session: AuthenticatedSession): Promise<string> => {
+  const secretKey = getSecretKey();
   return await new SignJWT({ ...session })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime('2h')
-    .sign(SECRET_KEY);
+    .sign(secretKey);
 };
 
 export const verifySession = async (token: string): Promise<AuthenticatedSession | null> => {
   try {
-    const { payload } = await jwtVerify(token, SECRET_KEY, {
+    const secretKey = getSecretKey();
+    const { payload } = await jwtVerify(token, secretKey, {
       algorithms: ['HS256'],
     });
     return payload as unknown as AuthenticatedSession;

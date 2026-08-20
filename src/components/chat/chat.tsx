@@ -29,7 +29,6 @@ interface ChatProps {
 export const Chat: React.FC<ChatProps> = ({
   currentLanguage,
   onSendMessage,
-  avatarState,
   setAvatarState,
   onNewMessageLogged,
   chatTriggerText,
@@ -48,6 +47,7 @@ export const Chat: React.FC<ChatProps> = ({
       handleSend(chatTriggerText);
       clearChatTrigger?.();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chatTriggerText]);
 
 
@@ -69,7 +69,7 @@ export const Chat: React.FC<ChatProps> = ({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
 
-  const handleSend = async (textToSend: string, isConfirmation = false) => {
+  const handleSend = async (textToSend: string, _isConfirmation = false) => {
     if (!textToSend.trim()) return;
 
     const userMsg: Message = {
@@ -83,14 +83,6 @@ export const Chat: React.FC<ChatProps> = ({
     setInputValue('');
     setIsTyping(true);
     setAvatarState('thinking');
-
-    // Display temporary tool status text in UI if we know what tool will run
-    let toolRunningText = '';
-    if (currentPendingAction && isConfirmation && textToSend.toLowerCase() === 'yes') {
-      toolRunningText = currentPendingAction.toolName === 'markAttendance' 
-        ? 'Submitting attendance update...' 
-        : 'Submitting escalation request...';
-    }
 
     try {
       const result = await onSendMessage(textToSend, currentPendingAction);

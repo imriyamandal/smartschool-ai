@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { db, resetDatabase } from './database';
 import { checkAuthorization, AuthorizationError } from './auth/permissions';
-import { executeToolSecurely, toolsRegistry } from './tools/registry';
+import { executeToolSecurely } from './tools/registry';
 import { queryAIService, checkPromptInjection } from './ai/gemini';
 import { AuthenticatedSession } from '../types';
 

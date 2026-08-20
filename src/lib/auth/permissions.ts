@@ -1,4 +1,4 @@
-import { AuthenticatedSession, UserRole } from '../../types';
+import { AuthenticatedSession } from '../../types';
 import { db } from '../database';
 
 export class AuthorizationError extends Error {
@@ -30,7 +30,7 @@ export const checkAuthorization = (
     throw new AuthorizationError('Authentication required.');
   }
 
-  const { role, userId, studentId, parentId, teacherId } = session;
+  const { role, studentId, parentId, teacherId } = session;
 
   switch (capability) {
     case 'view_own_attendance': {

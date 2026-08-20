@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSession } from '../../../lib/auth/session';
 import { queryAIService, checkPromptInjection } from '../../../lib/ai/gemini';
-import { executeToolSecurely, toolsRegistry } from '../../../lib/tools/registry';
+import { executeToolSecurely } from '../../../lib/tools/registry';
 import { logAudit } from '../../../lib/security/audit';
 
 export async function POST(request: Request) {
